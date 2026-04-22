@@ -1,0 +1,18 @@
+name: Build OpenRV with AAC/HEVC
+
+on:
+  workflow_dispatch:
+    inputs:
+      skip_deps_cache:
+        description: 'Skip dependencies caching'
+        required: false
+        default: 'false'
+
+jobs:
+  windows:
+    uses: ./.github/workflows/ci-windows.yml
+    with:
+      skip_deps_cache: ${{ inputs.skip_deps_cache }}
+      qt5_modules: ''
+      full_matrix: 'false'
+      run_debug: 'false'

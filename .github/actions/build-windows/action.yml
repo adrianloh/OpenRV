@@ -203,7 +203,7 @@ runs:
       run: |
         cmake --version
         export QT_HOME=c:/Qt/${{ inputs.qt-version }}/msvc2019_64
-        cmake -B _build -G "Visual Studio 17 2022" -A x64 -DRV_DEPS_WIN_PERL_ROOT=c:/Strawberry/perl/bin -DCMAKE_BUILD_TYPE=${{ inputs.build-type }} -DRV_DEPS_QT_LOCATION=$QT_HOME -DRV_VFX_PLATFORM=${{ inputs.vfx-platform }}
+        cmake -B _build -G "Visual Studio 17 2022" -A x64 -DRV_DEPS_WIN_PERL_ROOT=c:/Strawberry/perl/bin -DCMAKE_BUILD_TYPE=${{ inputs.build-type }} -DRV_DEPS_QT_LOCATION=$QT_HOME -DRV_VFX_PLATFORM=${{ inputs.vfx-platform }} -DRV_FFMPEG_NON_FREE_DECODERS_TO_ENABLE="aac;aac_fixed;aac_latm;ac3;hevc;mpeg2video;prores;dnxhd;dvvideo;qtrle;vp9" -DRV_FFMPEG_NON_FREE_ENCODERS_TO_ENABLE="aac;prores;dnxhd"
       shell: msys2 {0}
 
     - name: Configure OpenRV
@@ -211,7 +211,7 @@ runs:
       run: |
         cmake --version
         export QT_HOME=c:/Qt/${{ inputs.qt-version }}/msvc2019_64
-        cmake -B _build -G "Visual Studio 17 2022" -A x64 -DRV_DEPS_WIN_PERL_ROOT=c:/Strawberry/perl/bin -DCMAKE_BUILD_TYPE=${{ inputs.build-type }} -DRV_DEPS_QT_LOCATION=$QT_HOME -DRV_VFX_PLATFORM=${{ inputs.vfx-platform }}
+        cmake -B _build -G "Visual Studio 17 2022" -A x64 -DRV_DEPS_WIN_PERL_ROOT=c:/Strawberry/perl/bin -DCMAKE_BUILD_TYPE=${{ inputs.build-type }} -DRV_DEPS_QT_LOCATION=$QT_HOME -DRV_VFX_PLATFORM=${{ inputs.vfx-platform }} -DRV_FFMPEG_NON_FREE_DECODERS_TO_ENABLE="aac;aac_fixed;aac_latm;ac3;hevc;mpeg2video;prores;dnxhd;dvvideo;qtrle;vp9" -DRV_FFMPEG_NON_FREE_ENCODERS_TO_ENABLE="aac;prores;dnxhd"
       shell: msys2 {0}
 
     - name: Build OpenRV dependencies
@@ -233,3 +233,13 @@ runs:
     - name: Install OpenRV
       run: cmake --install _build --prefix $(pwd)/_install --config ${{ inputs.build-type }}
       shell: msys2 {0}
+    - name: Upload built OpenRV (all codecs)
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: OpenRV-${{ inputs.vfx-platform }}-${{ inputs.build-type }}-all-codecs
+        path: |
+          _install/**
+          _build/stage/app/**
+        if-no-files-found: warn
+        retention-days: 7
