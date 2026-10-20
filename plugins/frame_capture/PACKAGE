@@ -1,0 +1,8 @@
+package: Frame Capture
+author: TTWP
+organization:
+version: 1.1
+requires: ''
+modes:
+  - file: frame_capture
+    load: immediate

@@ -15,7 +15,12 @@ Owner uses the result as his daily RV at `C:\Program Files\RV` (plain folder, no
 3. **Per-clip colors in the sequence timeline** — `src/lib/app/mu_rvui/timeline.mu`: each clip gets a color from a
    32-color palette (`initClipPalettes`), chosen by hashing the clip's source name mod 31 (prime, on purpose:
    mod 32 collapses to 2 buckets). Palettes are precomputed at widget init; the draw loop is just an array lookup.
-4. **`tools/rvbuild.py`** — trigger / watch / download the Actions build (see below).
+4. **Custom RV packages** — `plugins/<name>/` (fast_edit_mode, frame_capture, py_console, watch_directory), hooked
+   into the build by one `ADD_SUBDIRECTORY` line at the end of `src/plugins/CMakeLists.txt`. They ship as `.rvpkg`
+   in `PlugIns/Packages` and are auto-enabled by the build's `rvinstall` step. See `plugins/README.md`.
+   Not yet verified in CI. `fast_edit_mode` here is the early v1.0 (Ctrl+Enter toggle only); the later version
+   (JKL shuttle, in/out, next/prev shot, double-tap) lives in the "RV FastEdit 2" claude.ai thread and still has to be brought in.
+5. **`tools/rvbuild.py`** — trigger / watch / download the Actions build (see below).
 
 ## Building
 

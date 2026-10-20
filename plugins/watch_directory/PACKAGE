@@ -1,0 +1,8 @@
+package: Watch Directory
+author: TTWP
+organization:
+version: 1.0
+requires: ''
+modes:
+  - file: watch_directory
+    load: immediate

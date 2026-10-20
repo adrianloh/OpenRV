@@ -1,0 +1,8 @@
+package: Python Console
+author: TTWP
+organization:
+version: 1.0
+requires: ''
+modes:
+  - file: py_console
+    load: immediate
