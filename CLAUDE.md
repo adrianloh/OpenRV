@@ -9,7 +9,7 @@ Owner uses the result as his daily RV at `C:\Program Files\RV` (plain folder, no
 1. **Extra FFmpeg codecs** — `.github/actions/build-windows/action.yml`: both `cmake -B _build` lines carry
    `-DRV_FFMPEG_NON_FREE_DECODERS_TO_ENABLE="aac;aac_fixed;aac_latm;ac3;hevc;mpeg2video;prores;dnxhd;dvvideo;qtrle;vp9"`
    and `-DRV_FFMPEG_NON_FREE_ENCODERS_TO_ENABLE="aac;prores;dnxhd"`. A final step uploads the build as an artifact
-   (`_install/**` + `_build/stage/app/**`, retention **7 days**).
+   (`_install/**` only, retention **7 days**).
 2. **One-click build workflow** — `.github/workflows/build-aac.yml` (`workflow_dispatch`, wraps `ci-windows.yml`,
    CY2024 only, no Debug). Upstream's own `ci.yml` is gated to the ASWF org and never runs on the fork.
 3. **Per-clip colors in the sequence timeline** — `src/lib/app/mu_rvui/timeline.mu`: each clip gets a color from a
@@ -26,14 +26,13 @@ Owner uses the result as his daily RV at `C:\Program Files\RV` (plain folder, no
 
 ```powershell
 pip install requests
-$env:GITHUB_TOKEN = "github_pat_..."          # fine-grained PAT, this repo only: Actions r/w, Contents read
+$env:GITHUB_TOKEN = "github_pat_..."          # or: empty folder tools\github_pat_<token> (git-ignored); fine-grained PAT, this repo only: Actions r/w, Contents read
 python tools/rvbuild.py build --extract C:\RV-new   # trigger, wait ~2.5 h, download, unpack _install\ to C:\RV-new
 python tools/rvbuild.py trigger                      # just start it (watch on GitHub -> Actions)
 python tools/rvbuild.py download                     # newest successful run; resumable
 ```
 
-- Artifacts **expire after 7 days** and are ~2+ GB (the `_build/stage/app` upload duplicates `_install`; dropping it
-  from the action's `path:` would roughly halve the download if that copy isn't needed).
+- Artifacts **expire after 7 days**, ~1 GB (the old `_build/stage/app` duplicate was dropped from the upload).
 - To install: close RV, then replace the contents of `C:\Program Files\RV` with the extracted `_install` tree
   (needs admin). Keep the previous install around until the new one opens a real project.
 - **Hot-patch without rebuilding:** `timeline.mu` ships as plain text at `<RV>\PlugIns\Mu\timeline.mu`. Edit it in
@@ -47,7 +46,7 @@ python tools/rvbuild.py download                     # newest successful run; re
   Expect possible conflicts in `action.yml` (the cmake lines) and `timeline.mu`.
 - Line endings: this clone has `core.autocrlf=false` and the repo is LF. If Windows git shows hundreds of "modified"
   files, that's CRLF noise from a different autocrlf setting — check `git config core.autocrlf`, don't commit it.
-- Never commit a token. The old `openrv-builder` folder once contained a directory named after a GitHub PAT.
+- Never commit a token. The token may live as an empty folder name in `tools/` (`tools/github_pat_*` is git-ignored).
 
 ## State / history (as of 2026-10-21)
 

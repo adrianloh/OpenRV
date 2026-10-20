@@ -238,8 +238,6 @@ runs:
       uses: actions/upload-artifact@v4
       with:
         name: OpenRV-${{ inputs.vfx-platform }}-${{ inputs.build-type }}-all-codecs
-        path: |
-          _install/**
-          _build/stage/app/**
+        path: _install/**
         if-no-files-found: warn
         retention-days: 7

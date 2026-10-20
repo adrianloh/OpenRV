@@ -11,8 +11,9 @@ script only drives GitHub:
     python tools/rvbuild.py trigger               # just start a build, don't wait
     python tools/rvbuild.py download              # fetch the newest successful build
 
-Needs:  pip install requests   and a GitHub token in $GITHUB_TOKEN
-(fine-grained PAT, this repo only: Actions=read/write, Contents=read).
+Needs:  pip install requests   and a GitHub token (fine-grained PAT, this repo only:
+Actions=read/write, Contents=read), found in this order: --token, $GITHUB_TOKEN, or an
+empty folder named github_pat_<token> next to this script (tools/github_pat_*, git-ignored).
 Artifacts expire on GitHub after 7 days; download promptly.
 """
 
@@ -697,6 +698,15 @@ def default_downloads_dir() -> Path:
     return Path.home() / "Downloads"
 
 
+def find_token_in_script_dir() -> Optional[str]:
+    """Return the name of a 'github_pat_*' folder next to this script (token stashed as a folder name)."""
+    script_dir = Path(__file__).resolve().parent
+    matches = [p.name for p in script_dir.iterdir() if p.is_dir() and p.name.startswith("github_pat_")]
+    if len(matches) > 1:
+        log(f"WARNING: multiple github_pat_* folders next to script; using {matches[0]}")
+    return matches[0] if matches else None
+
+
 def extract_install(zip_path: Path, dest: Path) -> None:
     """Unpack the _install/ tree from the artifact zip into dest (without the prefix)."""
     log(f"Extracting _install/ from {zip_path.name} to {dest} ...")
@@ -734,8 +744,12 @@ def main() -> None:
     args = p.parse_args()
 
     if not args.token:
-        sys.exit("ERROR: No token. Set GITHUB_TOKEN (PowerShell: "
-                 "$env:GITHUB_TOKEN = 'github_pat_...') or pass --token.")
+        args.token = find_token_in_script_dir()
+        if args.token:
+            log("Using token from the github_pat_* folder next to this script.")
+    if not args.token:
+        sys.exit("ERROR: No token. Pass --token, set $GITHUB_TOKEN, or create an empty folder "
+                 "named github_pat_<token> in tools/.")
 
     verify_token_and_fork(args.token, args.username)
 
