@@ -74,8 +74,13 @@ python tools/rvbuild.py download                     # newest successful run; re
   `Z:\dev\openrv-builder` (old scripts; the token folder now lives in `tools/`), `C:\Program Files\RV_042225`
   (older install).
 
-## Working with Claude on this machine
+## Working with Claude
 
-- Claude's shell on this PC is a Linux VM that sees the folders under `Z:\dev\...` — it can read/edit/commit but
-  **cannot push** and cannot run Windows tools (Python/git for Windows, RV itself). The owner pushes and runs builds.
+- This file was written in a session where Claude ran in the cloud with only a Linux VM on the owner's PC (folders under
+  `Z:\dev`, read/edit/commit only; no PowerShell, no Windows Python/git, no push, no `rv.exe`). If you are a Claude running
+  directly on the PC you can do those things: check `git status -sb` for unpushed commits and push if the owner asks.
+- Context that lives outside this repo: the owner's claude.ai threads (e.g. "RV FastEdit 2", "RV timeline.mu", the
+  build-script thread) hold the design history of fast_edit_mode, the timeline colors and the codec debugging
+  (hevc needs `__FFMPEG_ENABLE_NON_FREE_DECODER_hevc`, i.e. must be in the decoder list).
+- Owner style: terse, wants the answer rather than a tour. Ask for missing files in one line.
 - Commits Claude makes carry a `Co-Authored-By: Claude` trailer.
