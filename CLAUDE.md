@@ -18,8 +18,8 @@ Owner uses the result as his daily RV at `C:\Program Files\RV` (plain folder, no
 4. **Custom RV packages** — `plugins/<name>/` (fast_edit_mode, frame_capture, py_console, watch_directory), hooked
    into the build by one `ADD_SUBDIRECTORY` line at the end of `src/plugins/CMakeLists.txt`. They ship as `.rvpkg`
    in `PlugIns/Packages` and are auto-enabled by the build's `rvinstall` step. See `plugins/README.md`.
-   Not yet verified in CI. `fast_edit_mode` here is the early v1.0 (Ctrl+Enter toggle only); the later version
-   (JKL shuttle, in/out, next/prev shot, double-tap) lives in the "RV FastEdit 2" claude.ai thread and still has to be brought in.
+   Not yet verified in CI. `fast_edit_mode` is v1.1 = the owner's live file (shuttle, in/out, next/prev shot).
+   Caveat: an installed `.rvpkg` can be stale vs the extracted `.py` RV actually loads; compare before trusting a package.
 5. **`tools/rvbuild.py`** — trigger / watch / download the Actions build (see below).
 
 ## Building

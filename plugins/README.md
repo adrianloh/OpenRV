@@ -11,7 +11,7 @@ enables* every package in that folder, same as the stock ones.
 
 | Plugin | What it does |
 |---|---|
-| `fast_edit_mode` | Ctrl+Enter toggles sequence view / single-clip view (this is the early v1.0; see CLAUDE.md) |
+| `fast_edit_mode` | Edit-review keys: I/O in/out points (+clear), Enter toggles sequence/clip view, JKL-style shuttle on Up/K/Down, Ctrl+Left/Right next/prev shot (double-tap = previous shot), Shift+Up/Down move clip, Shift+Space preroll |
 | `frame_capture` | `s` saves the current frame as PNG to `C:/Users/TTWP/Downloads` (path is hardcoded) |
 | `py_console` | Modeless Python console window (needs PySide6, which RV bundles) |
 | `watch_directory` | Tools > Watch Directory...: auto-loads new .mp4 files from a folder |

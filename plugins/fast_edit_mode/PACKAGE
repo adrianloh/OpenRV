@@ -1,7 +1,7 @@
 package: Fast Edit Mode
 author: TTWP
 organization:
-version: 1.0
+version: 1.1
 requires: ''
 modes:
   - file: fast_edit_mode
