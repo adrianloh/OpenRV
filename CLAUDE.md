@@ -15,11 +15,18 @@ Owner uses the result as his daily RV at `C:\Program Files\RV` (plain folder, no
 3. **Per-clip colors in the sequence timeline** — `src/lib/app/mu_rvui/timeline.mu`: each clip gets a color from a
    32-color palette (`initClipPalettes`), chosen by hashing the clip's source name mod 31 (prime, on purpose:
    mod 32 collapses to 2 buckets). Palettes are precomputed at widget init; the draw loop is just an array lookup.
-4. **Custom RV packages** — `plugins/<name>/` (fast_edit_mode, frame_capture, py_console, watch_directory), hooked
-   into the build by one `ADD_SUBDIRECTORY` line at the end of `src/plugins/CMakeLists.txt`. They ship as `.rvpkg`
-   in `PlugIns/Packages` and are auto-enabled by the build's `rvinstall` step. See `plugins/README.md`.
-   Not yet verified in CI. `fast_edit_mode` is v1.1 = the owner's live file (shuttle, in/out, next/prev shot).
-   Caveat: an installed `.rvpkg` can be stale vs the extracted `.py` RV actually loads; compare before trusting a package.
+4. **Custom RV packages** — `plugins/<name>/`: `fast_edit_mode` (v1.1), `frame_capture`, `py_console`,
+   `watch_directory`. Hooked into the build by one `ADD_SUBDIRECTORY` line at the end of `src/plugins/CMakeLists.txt`;
+   every folder with a `CMakeLists.txt` becomes `<name>-<version>.rvpkg` in `PlugIns/Packages` and is installed *and
+   enabled* by the build's `rvinstall` step. All four are the owner's live files, confirmed by him against his
+   running RV on 2026-10-21. See `plugins/README.md`. **This hook has not been exercised by a CI build yet.**
+   - Changing a plugin: edit the `.py`, **bump `version:` in its `PACKAGE`**. New plugin: copy a sibling folder.
+   - `frame_capture` saves to a hardcoded `C:/Users/TTWP/Downloads`. `watch_directory` was installed-but-disabled in
+     the owner's old setup; the bundled install will enable it (disable in the Package Manager if unwanted).
+   - After installing a build that bundles these, remove the same packages from his user-level package folder,
+     otherwise each loads twice (double keybindings/menus).
+   - An installed `.rvpkg` can be stale vs the extracted `.py` RV really loads (this nearly cost us the newer
+     `fast_edit_mode`); trust the owner's live file, not the package.
 5. **`tools/rvbuild.py`** — trigger / watch / download the Actions build (see below).
 
 ## Building
@@ -50,15 +57,22 @@ python tools/rvbuild.py download                     # newest successful run; re
 
 ## State / history (as of 2026-10-21)
 
-- Fork was based on upstream `d1ca02c` (Apr 2026) + our codec commit; upstream was 115 commits ahead when this
-  file was written. No sync has been done since the Apr 22 build.
-- The only successful Actions run so far is the Apr 22 build (no timeline patch in CI). **The timeline patch has
-  not yet been verified by a CI build** — it was previously hot-patched into the installs by hand. First thing to do
-  after pushing: run `rvbuild.py build` and confirm the colored timeline in the result.
+- Fork is based on upstream `d1ca02c` (Apr 2026) + our codec commit `fd128e1`; upstream was 115 commits ahead.
+  No upstream sync since the Apr 22 build — deliberately left out so the next build changes only our own things.
+- Commits made on top that **may still be unpushed** (the PC's Claude can't push; check `git status -sb`): timeline
+  colors, `tools/rvbuild.py` + CLAUDE.md, `plugins/`, rvbuild token lookup, fast_edit_mode 1.1.
+- The only successful Actions run so far is the Apr 22 build (it has neither the timeline patch nor `plugins/`;
+  the timeline was hot-patched into the installs by hand).
+- **Next steps:** (1) `git push`; (2) `python tools/rvbuild.py build --extract C:\RV-new`; (3) in the result check the
+  colored timeline, that the four packages are present and enabled, and no duplicates with user-level copies;
+  (4) swap into `C:\Program Files\RV`; (5) later, merge upstream and rebuild.
+- RV's own log: `%APPDATA%\ASWF\OpenRV\OpenRV.log` (session start/end, plugin loading). The owner's user-level
+  package folder was not located.
 - Old materials were salvaged to `Z:\dev\openrv-builds\_salvage\` (old Python builder scripts, old action.yml,
-  the hand-edited timeline.mu). Previous build zips live in `Z:\dev\openrv-builds\`.
-- Superseded folders (candidates for deletion once the owner confirms): `Z:\dev\openrv-full` (stale shallow clone),
-  `Z:\dev\openrv-builder` (old scripts + stray token-named folder), `C:\Program Files\RV_042225` (older install).
+  the hand-edited timeline.mu). Previous build zips live in `Z:\dev\openrv-builds\` (kept on purpose).
+- Superseded, candidates for deletion once the owner confirms: `Z:\dev\openrv-full` (stale shallow clone),
+  `Z:\dev\openrv-builder` (old scripts; the token folder now lives in `tools/`), `C:\Program Files\RV_042225`
+  (older install).
 
 ## Working with Claude on this machine
 
