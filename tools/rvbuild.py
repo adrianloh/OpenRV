@@ -732,7 +732,7 @@ def main() -> None:
     p.add_argument("--username", default=DEFAULT_OWNER,
                    help=f"GitHub owner of the fork (default: {DEFAULT_OWNER})")
     p.add_argument("--token", default=os.environ.get("GITHUB_TOKEN"),
-                   help="GitHub token. Defaults to $GITHUB_TOKEN.")
+                   help="GitHub token. Defaults to $GITHUB_TOKEN, then a github_pat_* folder next to this script.")
     p.add_argument("--download-dir", type=Path, default=default_downloads_dir(),
                    help="Where to save the artifact zip (default: Downloads).")
     p.add_argument("--extract", type=Path, default=None, metavar="DIR",
