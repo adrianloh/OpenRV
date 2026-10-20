@@ -119,6 +119,9 @@ class: Timeline : Widget
     float           _inOutRegionOffsetRight;
     string          _mainNode;
     int[]           _sequenceBoundaries;
+    Color[]         _clipDarkPalette;
+    Color[]         _clipLightPalette;
+    int[]           _clipColorIndices;
     bool            _sequenceBoundariesDirty;
 
     class: Locations
@@ -988,6 +991,29 @@ class: Timeline : Widget
         if (_sequenceBoundariesDirty)
 	{
 	    _sequenceBoundaries = sequenceBoundaries(_mainNode);
+	    _clipColorIndices = int[]();
+
+	    // Mod by 31 (prime) rather than paletteSize (32). ELF hash on
+	    // sequentially-numbered node names like "sourceGroup000000_source"
+	    // aligns with powers of two and collapses to 2 buckets when mod 32;
+	    // mod 31 breaks that alignment and distributes evenly.
+	    let modulus = 31,
+	        nb     = _sequenceBoundaries.size(),
+	        fs     = frameStart(),
+	        fe     = frameEnd();
+
+	    for_index (q; _sequenceBoundaries)
+	    {
+	        let segStart = if q == 0      then fs else _sequenceBoundaries[q],
+	            segEnd   = if q == nb - 1 then fe else _sequenceBoundaries[q+1],
+	            midF     = (segStart + segEnd) / 2,
+	            srcs     = sourcesAtFrame(midF),
+	            name     = if srcs.empty() then "" else srcs.front(),
+	            idx      = if name == "" then q % modulus else name.hash() % modulus;
+
+	        _clipColorIndices.push_back(idx);
+	    }
+
 	    _sequenceBoundariesDirty = false;
 	}
     }
@@ -1084,6 +1110,7 @@ class: Timeline : Widget
         _drag              = false;
         _displayMbps       = (system.getenv("RV_DISPLAY_MBPS", "no") != "no");
         _displayAudioCache = (system.getenv("RV_DISPLAY_AUDIO_CACHE", "no") != "no");
+        initClipPalettes();
         _controlSize       = 35;
         _tlw               = 100;
 
@@ -1091,6 +1118,7 @@ class: Timeline : Widget
 
         _sequenceBoundariesDirty = true;
         _sequenceBoundaries = int[]();
+        _clipColorIndices = int[]();
 
         setFrameDisplayFormat (_settings.frameDisplayFormat);
 
@@ -1137,6 +1165,59 @@ class: Timeline : Widget
             return true;
 
         return nodeRangeInfo(metainfo.node).isUndiscovered;
+    }
+
+    method: initClipPalettes (void;)
+    {
+        _clipDarkPalette  = Color[]();
+        _clipLightPalette = Color[]();
+
+        Color[] base = {
+            Color(0.875, 0.000, 0.110, 1),   // #df001c
+            Color(0.729, 0.000, 1.000, 1),   // #ba00ff
+            Color(0.000, 0.573, 0.000, 1),   // #009200
+            Color(0.000, 0.651, 0.745, 1),   // #00a6be
+            Color(0.906, 0.714, 0.063, 1),   // #e7b610
+            Color(1.000, 0.604, 0.824, 1),   // #ff9ad2
+            Color(0.651, 0.000, 0.510, 1),   // #a60082
+            Color(0.000, 0.875, 0.573, 1),   // #00df92
+            Color(0.510, 0.333, 0.016, 1),   // #825504
+            Color(0.714, 0.682, 1.000, 1),   // #b6aeff
+            Color(0.000, 0.427, 0.557, 1),   // #006d8e
+            Color(1.000, 0.459, 0.490, 1),   // #ff757d
+            Color(0.937, 0.000, 0.875, 1),   // #ef00df
+            Color(0.000, 0.490, 0.365, 1),   // #007d5d
+            Color(0.984, 0.000, 0.475, 1),   // #fb0079
+            Color(0.588, 0.698, 0.031, 1),   // #96b208
+            Color(0.110, 0.573, 1.000, 1),   // #1c92ff
+            Color(0.604, 0.224, 0.255, 1),   // #9a3941
+            Color(0.490, 0.271, 0.588, 1),   // #7d4596
+            Color(0.682, 0.525, 0.016, 1),   // #ae8604
+            Color(0.457, 0.212, 0.850, 1),   // #7436d8
+            Color(1.000, 0.365, 0.000, 1),   // #ff5d00
+            Color(0.365, 0.651, 0.427, 1),   // #5da66d
+            Color(0.843, 0.475, 1.000, 1),   // #d779ff
+            Color(0.157, 0.890, 0.000, 1),   // #28e300
+            Color(0.714, 0.380, 0.557, 1),   // #b6618e
+            Color(0.239, 0.271, 1.000, 1),   // #3d45ff
+            Color(0.729, 0.412, 0.255, 1),   // #ba6941
+            Color(0.490, 0.792, 1.000, 1),   // #7dcaff
+            Color(0.318, 0.412, 0.125, 1),   // #516920
+            Color(0.984, 0.651, 0.427, 1),   // #fba66d
+            Color(0.443, 0.443, 0.698, 1)    // #7171b2
+        };
+
+        let dlFact = 0.12,
+            dFact  = 1.0 - dlFact,
+            lFact  = 1.0 + dlFact,
+            dMul   = Color(dFact, dFact, dFact, 1),
+            lMul   = Color(lFact, lFact, lFact, 1);
+
+        for_each (c; base)
+        {
+            _clipDarkPalette.push_back(c * dMul);
+            _clipLightPalette.push_back(c * lMul);
+        }
     }
 
     method: render (void; Event event)
@@ -1347,7 +1428,7 @@ class: Timeline : Widget
                 for_index (q; _sequenceBoundaries)
                 {
                     let i            = q + 1,
-                        color        = if (i % 2 == 1) then boundsDark else boundsLight,
+                        color        = _clipDarkPalette[_clipColorIndices[q]],
                         fracStart    = if (i == 1) then 0.0 else
                                        float(_sequenceBoundaries[i-1] - fs)/r,
                         fracEnd      = if (i == _sequenceBoundaries.size()) then 1.0 else
@@ -1363,7 +1444,7 @@ class: Timeline : Widget
                 for_index (q; _sequenceBoundaries)
                 {
                     let i         = q + 1,
-                        color     = if (i % 2 == 1) then rangeDark else rangeLight,
+                        color     = _clipLightPalette[_clipColorIndices[q]],
                         fracStart = if (i == 1) then 0.0 else
                                     float(_sequenceBoundaries[i-1] - fs)/r,
                         fracEnd   = if (i == _sequenceBoundaries.size()) then 1.0 else
