@@ -708,15 +708,27 @@ def find_token_in_script_dir() -> Optional[str]:
 
 
 def extract_install(zip_path: Path, dest: Path) -> None:
-    """Unpack the _install/ tree from the artifact zip into dest (without the prefix)."""
-    log(f"Extracting _install/ from {zip_path.name} to {dest} ...")
+    """Unpack the install tree from the artifact zip into dest.
+
+    Older artifacts wrapped the tree in an _install/ folder; newer ones have
+    bin/, PlugIns/ and the rest at the zip's root. Either way the tree lands
+    directly in dest.
+    """
+    log(f"Extracting {zip_path.name} to {dest} ...")
     n = 0
+    root = dest.resolve()
     with zipfile.ZipFile(zip_path) as z:
+        names = [info.filename for info in z.infolist()]
+        prefix = "_install/" if any(name.startswith("_install/") for name in names) else ""
         for info in z.infolist():
-            if not info.filename.startswith("_install/") or info.is_dir():
+            if not info.filename.startswith(prefix) or info.is_dir():
                 continue
-            rel = info.filename[len("_install/"):]
+            rel = info.filename[len(prefix):]
             target = dest / rel
+            # Never write outside dest, whatever a name in the zip says.
+            if not target.resolve().is_relative_to(root):
+                log(f"  Skipped {info.filename}: outside {dest}")
+                continue
             target.parent.mkdir(parents=True, exist_ok=True)
             with z.open(info) as src_f, open(target, "wb") as out_f:
                 while chunk := src_f.read(1024 * 1024):
@@ -736,7 +748,7 @@ def main() -> None:
     p.add_argument("--download-dir", type=Path, default=default_downloads_dir(),
                    help="Where to save the artifact zip (default: Downloads).")
     p.add_argument("--extract", type=Path, default=None, metavar="DIR",
-                   help="After downloading, unpack _install/ into DIR.")
+                   help="After downloading, unpack the install tree into DIR.")
     p.add_argument("--workers", type=int, default=8,
                    help="Parallel download workers (default: 8).")
     p.add_argument("--chunk-mb", type=int, default=64,
